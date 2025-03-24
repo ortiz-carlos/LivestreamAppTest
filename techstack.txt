@@ -1,0 +1,14 @@
+Frontend: React.js with Vite or Next.js
+
+Backend: FastAPI (Python)
+
+Database: PostgreSQL (via Supabase)
+
+Scoreboard (Real-Time): Socket.IO (or FastAPI WebSockets)
+
+Authentication: Firebase Auth or Supabase Auth
+
+Deployment:
+    Frontend: Vercel or Netlify
+    Backend: Fly.io or Render
+        Database: Supabase
