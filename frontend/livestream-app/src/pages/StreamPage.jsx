@@ -4,10 +4,15 @@ import '../styles.css';
 const StreamPage = () => {
   const [url, setUrl] = useState('');
   const [error, setError] = useState('');
-  const [score, setScore] = useState({ home: 0, away: 0 });
+  const [score, setScore] = useState({
+    home: 0,
+    away: 0,
+    home_name: 'Home',
+    away_name: 'Away'
+  });
   const [status, setStatus] = useState("Connecting...");
 
-  // Fetch the livestream URL on load
+  // Fetch the livestream URL
   useEffect(() => {
     fetch('http://localhost:8000/live_url')
       .then((res) => res.text())
@@ -15,7 +20,7 @@ const StreamPage = () => {
         if (text.includes('youtube.com')) {
           setUrl(text);
         } else {
-          setError(text); // like "No livestream available"
+          setError(text);
         }
       })
       .catch((err) => {
@@ -24,7 +29,7 @@ const StreamPage = () => {
       });
   }, []);
 
-  // Open WebSocket connection on load
+  // Connect to WebSocket
   useEffect(() => {
     const socket = new WebSocket("ws://localhost:8000/ws/score");
 
@@ -42,14 +47,20 @@ const StreamPage = () => {
 
   return (
     <div className="stream-container">
+      {/* TV-style Score Bug Overlay */}
+      <div className="score-bug">
+        <div className="team">
+          <span className="team-name">{score.home_name}</span>
+          <span className="score">{score.home}</span>
+        </div>
+        <div className="team">
+          <span className="team-name">{score.away_name}</span>
+          <span className="score">{score.away}</span>
+        </div>
+      </div>
+
       <h1>Live Broadcast</h1>
       <p>{status}</p>
-
-      {/* Live scoreboard */}
-      <div className="scoreboard">
-        <h2>Scoreboard</h2>
-        <p>Home: {score.home} | Away: {score.away}</p>
-      </div>
 
       {url ? (
         <iframe
