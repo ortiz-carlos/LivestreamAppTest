@@ -10,6 +10,9 @@ const AdminPage = () => {
   const [response, setResponse] = useState(null);
   const [error, setError] = useState('');
 
+  const [home, setHome] = useState(0);
+  const [away, setAway] = useState(0);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -26,6 +29,19 @@ const AdminPage = () => {
       setResponse(res.data);
     } catch (err) {
       setError(err.response?.data?.detail || 'An error occurred');
+    }
+  };
+
+  const updateScore = async (team, points) => {
+    try {
+      const res = await axios.post('http://localhost:8000/score/update', {
+        team,
+        points
+      });
+      setHome(res.data.home);
+      setAway(res.data.away);
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -52,6 +68,16 @@ const AdminPage = () => {
       )}
 
       {error && <p className="error">{error}</p>}
+
+      {/* Scoreboard controls section */}
+      <div className="score-controls">
+        <h2>Scoreboard</h2>
+        <p>Home: {home} | Away: {away}</p>
+        <button onClick={() => updateScore("home", 1)}>+1 Home</button>
+        <button onClick={() => updateScore("away", 1)}>+1 Away</button>
+        <button onClick={() => updateScore("home", -1)}>-1 Home</button>
+        <button onClick={() => updateScore("away", -1)}>-1 Away</button>
+      </div>
     </div>
   );
 };

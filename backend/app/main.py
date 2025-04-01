@@ -1,7 +1,12 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel, constr
+from pydantic import BaseModel, StringConstraints
+from typing import Annotated
 from fastapi.middleware.cors import CORSMiddleware
 from youtube_utils import schedule_broadcast
+from fastapi import WebSocket, WebSocketDisconnect
+from fastapi.responses import JSONResponse
+from fastapi import Body
+
 
 app = FastAPI()
 
@@ -14,10 +19,53 @@ app.add_middleware(
 )
 
 class BroadcastRequest(BaseModel):
-    title: constr(min_length=1)
+    title: Annotated[str, StringConstraints(min_length=1)]
     month: int
     day: int
-    time: constr(regex=r"^\d{2}:\d{2}$")  # HH:MM format
+    time: Annotated[str, StringConstraints(pattern=r"^\d{2}:\d{2}$")]
+
+scoreboard = {"home": 0, "away": 0}
+clients = []
+
+class ScoreUpdate(BaseModel):
+    team: str
+    points: int
+
+@app.post("/score/update")
+async def update_score(update: ScoreUpdate):
+    if update.team not in scoreboard:
+        return JSONResponse(status_code=400, content={"error": "Invalid team"})
+
+    scoreboard[update.team] += update.points
+    print(f"[UPDATE] {update.team} +{update.points} → {scoreboard}")
+
+    # Notify all connected clients
+    for ws in clients:
+        try:
+            await ws.send_json(scoreboard)
+        except Exception as e:
+            print(f"[ERROR] Failed to notify client: {e}")
+
+    return scoreboard
+
+
+@app.websocket("/ws/score")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    print("[WS] Client connected.")
+    clients.append(websocket)
+
+    try:
+        # Send the current score right away
+        await websocket.send_json(scoreboard)
+
+        # Keep the connection alive
+        while True:
+            await websocket.receive_text()
+    except WebSocketDisconnect:
+        print("[WS] Client disconnected.")
+        clients.remove(websocket)
+
 
 @app.post("/broadcast")
 def create_broadcast(request: BroadcastRequest):
