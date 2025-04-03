@@ -178,4 +178,16 @@ footer {
     padding: 5px 10px;
     border-radius: 5px;
   }
+
+  .auth-footer {
+    margin-top: 1rem;
+    font-size: 0.95em;
+  }
+  
+  .auth-footer a {
+    color: #860037;
+    text-decoration: none;
+    font-weight: bold;
+  }
+  
   
