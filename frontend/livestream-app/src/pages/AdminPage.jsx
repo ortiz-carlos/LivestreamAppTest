@@ -266,6 +266,27 @@ const AdminPage = () => {
       </div>
 
       {/* Current Broadcast Preview */}
+      <div className="current-broadcast">
+        <h2>Current Broadcast</h2>
+        <div className="broadcast-preview">
+          <div className="embed-preview">
+            {currentBroadcastUrl ? (
+              <iframe
+                title="Live Stream"
+                width="100%"
+                height="200"
+                src={currentBroadcastUrl}
+                frameBorder="0"
+                allowFullScreen
+              />
+            ) : (
+              <div className="placeholder">No active broadcast</div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Scoreboard Section */}
       <div className="score-controls">
         <h2>Scoreboard</h2>
 
