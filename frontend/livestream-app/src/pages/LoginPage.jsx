@@ -2,6 +2,7 @@ import React, { useState, useContext } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../AuthContext';
 import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 
 const LoginPage = () => {
@@ -9,6 +10,8 @@ const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [err, setErr] = useState('');
+  const navigate = useNavigate();
+
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -21,6 +24,7 @@ const LoginPage = () => {
       });
 
       login(token, me.data);
+      navigate('/home');
     } catch (error) {
       setErr('Invalid credentials');
     }

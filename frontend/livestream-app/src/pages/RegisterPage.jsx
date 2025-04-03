@@ -37,7 +37,7 @@ const RegisterPage = () => {
       });
 
       login(token, me.data);
-      navigate('/'); // redirect to homepage (or dashboard)
+      navigate('/home');
     } catch (error) {
       console.error(error);
       setErr(error.response?.data?.detail || 'Registration failed');
