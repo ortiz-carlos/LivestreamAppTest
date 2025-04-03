@@ -7,10 +7,13 @@ from fastapi import WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 from fastapi import Body
 from ws.scoreboard import router as scoreboard_router
+from auth import router as auth_router
 
 
 app = FastAPI()
 app.include_router(scoreboard_router)
+app.include_router(auth_router)
+
 
 app.add_middleware(
     CORSMiddleware,
