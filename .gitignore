@@ -18,3 +18,5 @@ logs/
 
 # Ignore live URL data file (optional, if you don't want to push live_url.txt)
 live_url.txt
+
+.env

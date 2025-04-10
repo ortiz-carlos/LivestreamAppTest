@@ -1,42 +1,127 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import '../styles.css';
+import { getUTCPartsFromLocal, getLocalInputsFromUTC } from '../utils/time_utils';
+
+const API_BASE_URL = 'http://localhost:8000';
+const WS_BASE_URL = 'ws://localhost:8000';
 
 const AdminPage = () => {
+  const [broadcasts, setBroadcasts] = useState([]);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingBroadcast, setEditingBroadcast] = useState(null);
+  const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+
   const [title, setTitle] = useState('');
-  const [month, setMonth] = useState('');
-  const [day, setDay] = useState('');
+  const [date, setDate] = useState('');
   const [time, setTime] = useState('');
-  const [response, setResponse] = useState(null);
   const [error, setError] = useState('');
 
   const [home, setHome] = useState(0);
   const [away, setAway] = useState(0);
   const [homeTeam, setHomeTeam] = useState('Home');
   const [awayTeam, setAwayTeam] = useState('Away');
+  const [currentBroadcastUrl, setCurrentBroadcastUrl] = useState('');
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setResponse(null);
+  useEffect(() => {
+    const ws = new WebSocket(`${WS_BASE_URL}/ws/score`);
 
+    ws.onmessage = (event) => {
+      const data = JSON.parse(event.data);
+      setHome(data.home);
+      setAway(data.away);
+      setHomeTeam(data.home_name);
+      setAwayTeam(data.away_name);
+    };
+
+    ws.onclose = () => {
+      console.log('WebSocket connection closed');
+    };
+
+    fetchLiveUrl();
+
+    return () => {
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
+    };
+  }, []);
+
+  useEffect(() => {
+    fetchBroadcasts();
+  }, []);
+
+  const fetchLiveUrl = async () => {
     try {
-      const res = await axios.post('http://localhost:8000/broadcast', {
-        title,
-        month: parseInt(month),
-        day: parseInt(day),
-        time,
-      });
+      const response = await axios.get(`${API_BASE_URL}/live_url`);
+      setCurrentBroadcastUrl(response.data);
+    } catch (err) {
+      console.error('Failed to fetch live URL:', err);
+    }
+  };
 
-      setResponse(res.data);
+  const fetchBroadcasts = async () => {
+    try {
+      const response = await axios.get(`${API_BASE_URL}/broadcasts`);
+      setBroadcasts(response.data);
+    } catch (err) {
+      setError('Failed to fetch broadcasts');
+    }
+  };
+
+  const handleCreateNew = () => {
+    setIsEditing(true);
+    setEditingBroadcast(null);
+    setTitle('');
+    setDate('');
+    setTime('');
+  };
+
+  const handleEdit = (broadcast) => {
+    setIsEditing(true);
+    setEditingBroadcast(broadcast);
+    setTitle(broadcast.title);
+    const { date: localDate, time: localTime } = getLocalInputsFromUTC(broadcast.date, broadcast.time);
+    setDate(localDate);
+    setTime(localTime);
+  };
+
+  const handleSave = async (e) => {
+    e.preventDefault();
+    try {
+      const { month, day, time: utcTime } = getUTCPartsFromLocal(date, time);
+      const broadcastData = {
+        title,
+        month,
+        day,
+        time: utcTime
+      };
+
+      if (editingBroadcast) {
+        await axios.put(`${API_BASE_URL}/broadcast/${editingBroadcast.id}`, broadcastData);
+      } else {
+        await axios.post(`${API_BASE_URL}/broadcast`, broadcastData);
+      }
+      setIsEditing(false);
+      fetchBroadcasts();
     } catch (err) {
       setError(err.response?.data?.detail || 'An error occurred');
     }
   };
 
+  const handleDelete = async (id) => {
+    try {
+      await axios.delete(`${API_BASE_URL}/broadcast/${id}`);
+      fetchBroadcasts();
+      setShowConfirmDelete(false);
+    } catch (err) {
+      setError('Failed to delete broadcast');
+    }
+  };
+
   const updateScore = async (team, points) => {
     try {
-      const res = await axios.post('http://localhost:8000/score/update', {
+      const res = await axios.post(`${API_BASE_URL}/score/update`, {
         team,
         points,
       });
@@ -47,16 +132,9 @@ const AdminPage = () => {
     }
   };
 
-  const resetScores = async () => {
-    await updateScore('home', -home);
-    await updateScore('away', -away);
-    setHome(0);
-    setAway(0);
-  };
-
   const updateTeamNames = async () => {
     try {
-      await axios.post('http://localhost:8000/score/team_names', {
+      await axios.post(`${API_BASE_URL}/score/team_names`, {
         home_name: homeTeam,
         away_name: awayTeam
       });
@@ -65,64 +143,96 @@ const AdminPage = () => {
     }
   };
 
-  return (
-    <div className="admin-container">
-      <h1>Create New Broadcast</h1>
-      <form onSubmit={handleSubmit} className="admin-form">
-        <input
-          type="text"
-          placeholder="Broadcast Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          required
-        />
-
-        <input
-          type="number"
-          placeholder="Month (1–12)"
-          value={month}
-          onChange={(e) => setMonth(e.target.value)}
-          required
-        />
-
-        <input
-          type="number"
-          placeholder="Day"
-          value={day}
-          onChange={(e) => setDay(e.target.value)}
-          required
-        />
-
-        <input
-          type="text"
-          placeholder="Time (HH:MM 24-hour)"
-          value={time}
-          onChange={(e) => setTime(e.target.value)}
-          required
-        />
-
-        <button type="submit" className="btn">
-          Schedule Broadcast
-        </button>
-      </form>
-
-      {response && (
-        <div className="result">
-          <p>
-            <strong>Broadcast created!</strong>
-          </p>
-          <p>
-            Watch live:{' '}
-            <a href={response.url} target="_blank" rel="noreferrer">
-              {response.url}
-            </a>
-          </p>
+  if (isEditing) {
+    return (
+      <div className="admin-page">
+        <div className="edit-broadcast">
+          <div className="header">
+            <button className="btn back-btn" onClick={() => setIsEditing(false)}>Back</button>
+            <h2>{editingBroadcast ? 'Edit Broadcast' : 'Create Broadcast'}</h2>
+          </div>
+          <form onSubmit={handleSave}>
+            <input
+              type="text"
+              placeholder="Title"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+            />
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              required
+            />
+            <input
+              type="time"
+              value={time}
+              onChange={(e) => setTime(e.target.value)}
+              required
+            />
+            <div className="button-group">
+              <button type="submit" className="btn save-btn">Save</button>
+              {editingBroadcast && (
+                <button
+                  type="button"
+                  className="btn delete-btn"
+                  onClick={() => setShowConfirmDelete(true)}
+                >
+                  Delete
+                </button>
+              )}
+            </div>
+          </form>
+          {error && <p className="error">{error}</p>}
         </div>
-      )}
+      </div>
+    );
+  }
 
-      {error && <p className="error">{error}</p>}
+  return (
+    <div className="admin-page">
+      <div className="welcome-section">
+        <h1>Welcome</h1>
+        <button className="btn create-btn" onClick={handleCreateNew}>Create Broadcast</button>
+      </div>
 
-      {/* Scoreboard controls section */}
+      <div className="scheduled-broadcasts">
+        <h2>Scheduled Broadcasts:</h2>
+        {broadcasts.map((broadcast) => (
+          <div key={broadcast.id} className="broadcast-item">
+            <div className="broadcast-info">
+              <h3>{broadcast.title}</h3>
+              {(() => {
+                const localDate = new Date(`${broadcast.date}T${broadcast.time}:00Z`);
+                return <p>{localDate.toLocaleString()} (your time) </p>;
+              })()}
+            </div>
+            <button className="btn edit-btn" onClick={() => handleEdit(broadcast)}>Edit</button>
+          </div>
+        ))}
+      </div>
+
+      <div className="current-broadcast">
+        <h2>Current Broadcast</h2>
+        <div className="broadcast-preview">
+          <div className="embed-preview">
+            {currentBroadcastUrl ? (
+              <iframe
+                title="Live Stream"
+                width="100%"
+                height="200"
+                src={currentBroadcastUrl}
+                frameBorder="0"
+                allowFullScreen
+              />
+            ) : (
+              <div className="placeholder">No active broadcast</div>
+            )}
+          </div>
+        </div>
+      </div>
+
       <div className="score-controls">
         <h2>Scoreboard</h2>
 
@@ -143,7 +253,6 @@ const AdminPage = () => {
           />
         </div>
 
-
         <p style={{ fontSize: '1.2em', fontWeight: 'bold' }}>
           {homeTeam}: {home} | {awayTeam}: {away}
         </p>
@@ -155,10 +264,26 @@ const AdminPage = () => {
           <button onClick={() => updateScore('away', -1)}>-1 {awayTeam}</button>
         </div>
 
-        <button className="btn" onClick={resetScores}>
+        <button className="btn" onClick={() => {
+          updateScore('home', -home);
+          updateScore('away', -away);
+        }}>
           Reset Scores
         </button>
       </div>
+
+      {showConfirmDelete && (
+        <div className="modal">
+          <div className="modal-content">
+            <h3>Confirm Delete</h3>
+            <p>Are you sure you want to delete this broadcast?</p>
+            <div className="button-group">
+              <button className="btn delete-btn" onClick={() => handleDelete(editingBroadcast.id)}>Delete</button>
+              <button className="btn cancel-btn" onClick={() => setShowConfirmDelete(false)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
