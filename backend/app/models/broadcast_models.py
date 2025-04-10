@@ -1,6 +1,6 @@
 ### models/broadcast_models.py
 from pydantic import BaseModel, StringConstraints
-from typing import Annotated
+from typing import Annotated, Optional
 
 class BroadcastRequest(BaseModel):
     title: Annotated[str, StringConstraints(min_length=1)]
@@ -12,7 +12,7 @@ class BroadcastRequest(BaseModel):
 class BroadcastResponse(BaseModel):
     id: str
     title: str
-    description: str
+    description: Optional[str]= ""
     date: str
     time: str
     url: str
