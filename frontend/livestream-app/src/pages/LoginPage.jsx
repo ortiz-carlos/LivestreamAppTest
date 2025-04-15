@@ -1,16 +1,22 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useContext, useEffect } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../AuthContext';
-import { Link } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
-
+import { Link, useNavigate } from 'react-router-dom';
+import { supabase } from '../supabaseClient';
 
 const LoginPage = () => {
-  const { login } = useContext(AuthContext);
+  const { user, login, loading } = useContext(AuthContext);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [err, setErr] = useState('');
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!loading && user) {
+      navigate('/home');
+    }
+  }, [user, loading, navigate]);
+  
 
 
   const handleLogin = async (e) => {
@@ -23,27 +29,65 @@ const LoginPage = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      login(token, me.data);
+      login(token, me.data); // for FastAPI login
       navigate('/home');
     } catch (error) {
       setErr('Invalid credentials');
     }
   };
 
+const handleGoogleLogin = async () => {
+    const { data, error, url } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: 'http://localhost:3000'  // make sure this matches your Supabase setting
+      }
+    });
+  
+    if (error) {
+      setErr('Google login failed');
+      console.error('Google login error:', error.message);
+      return;
+    }
+  
+    // 🔁 Safer redirect
+    if (url) {
+      window.location.assign(url);
+    }
+  };
+  
+  
   return (
     <div className="login-container">
       <h2>Login</h2>
       {err && <p className="error">{err}</p>}
       <form onSubmit={handleLogin}>
-        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="Email" required />
-        <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" required />
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="Email"
+          required
+        />
+        <input
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          placeholder="Password"
+          required
+        />
         <button className="btn" type="submit">Log In</button>
       </form>
       <p>Don't have an account? <Link to="/register">Sign up</Link></p>
+
+      <div style={{ marginTop: '20px' }}>
+        <p>or</p>
+        <button className="btn" onClick={handleGoogleLogin}>
+          Sign in with Google
+        </button>
+      </div>
     </div>
   );
 };
-
-
 
 export default LoginPage;

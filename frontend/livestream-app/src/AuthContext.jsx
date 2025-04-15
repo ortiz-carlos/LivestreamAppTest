@@ -1,15 +1,17 @@
 import React, { createContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import { supabase } from './supabaseClient';
 
 export const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null); // user info
+  const [user, setUser] = useState(undefined); // undefined = loading
   const [token, setToken] = useState(localStorage.getItem('token') || '');
+  const [loading, setLoading] = useState(true);
 
-  // Load user from token
+
   useEffect(() => {
-    const fetchUser = async () => {
+    const fetchJWTUser = async () => {
       if (token) {
         try {
           const res = await axios.get('http://localhost:8000/me', {
@@ -19,15 +21,58 @@ export const AuthProvider = ({ children }) => {
           });
           setUser(res.data);
         } catch (err) {
-          console.error('Token invalid or expired');
+          console.error('JWT token invalid or expired');
           setUser(null);
           setToken('');
           localStorage.removeItem('token');
         }
       }
     };
-    fetchUser();
+    fetchJWTUser();
+    setLoading(false);
   }, [token]);
+
+  useEffect(() => {
+    const checkSupabaseUser = async () => {
+      // 🔁 Always call this manually on app load
+      const { data: { session }, error } = await supabase.auth.getSession();
+  
+      if (session?.user) {
+        setUser(session.user);
+        localStorage.setItem('supabase_session', JSON.stringify(session));
+      } else {
+        setUser(null);
+        localStorage.removeItem('supabase_session');
+      }
+  
+      // 🔐 Subscribe to auth state changes
+      const {
+        data: { subscription }
+      } = supabase.auth.onAuthStateChange((event, session) => {
+        if (session?.user) {
+          setUser(session.user);
+          localStorage.setItem('supabase_session', JSON.stringify(session));
+      
+          // ✅ Force reload after OAuth login
+          if (event === 'SIGNED_IN') {
+            window.location.reload(); // ensures app fully picks up new session
+          }
+      
+        } else {
+          setUser(null);
+          localStorage.removeItem('supabase_session');
+        }
+      });
+      
+  
+      setLoading(false);
+      return () => subscription.unsubscribe();
+    };
+  
+    checkSupabaseUser();
+  }, []);
+  
+  
 
   const login = (jwt, userData) => {
     setToken(jwt);
@@ -35,14 +80,16 @@ export const AuthProvider = ({ children }) => {
     setUser(userData);
   };
 
-  const logout = () => {
+  const logout = async () => {
     setToken('');
-    setUser(null);
     localStorage.removeItem('token');
+    setUser(null);
+    await supabase.auth.signOut(); // logs out Supabase users too
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, login, logout }}>
+      <AuthContext.Provider value={{ user, token, login, logout, loading }}>
+
       {children}
     </AuthContext.Provider>
   );
