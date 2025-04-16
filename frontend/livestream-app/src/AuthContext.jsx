@@ -34,8 +34,7 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const checkSupabaseUser = async () => {
-      // 🔁 Always call this manually on app load
-      const { data: { session }, error } = await supabase.auth.getSession();
+      const { data: { session }} = await supabase.auth.getSession();
   
       if (session?.user) {
         setUser(session.user);
@@ -45,18 +44,12 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('supabase_session');
       }
   
-      // 🔐 Subscribe to auth state changes
       const {
         data: { subscription }
       } = supabase.auth.onAuthStateChange((event, session) => {
         if (session?.user) {
           setUser(session.user);
           localStorage.setItem('supabase_session', JSON.stringify(session));
-      
-          // ✅ Force reload after OAuth login
-          if (event === 'SIGNED_IN') {
-            window.location.reload(); // ensures app fully picks up new session
-          }
       
         } else {
           setUser(null);

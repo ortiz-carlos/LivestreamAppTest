@@ -29,18 +29,18 @@ const LoginPage = () => {
         headers: { Authorization: `Bearer ${token}` }
       });
 
-      login(token, me.data); // for FastAPI login
+      login(token, me.data);
       navigate('/home');
     } catch (error) {
       setErr('Invalid credentials');
     }
   };
 
-const handleGoogleLogin = async () => {
-    const { data, error, url } = await supabase.auth.signInWithOAuth({
+  const handleGoogleLogin = async () => {
+    const { error, url } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: 'http://localhost:3000'  // make sure this matches your Supabase setting
+        redirectTo: 'http://localhost:3000/oauth/callback'
       }
     });
   
@@ -50,11 +50,11 @@ const handleGoogleLogin = async () => {
       return;
     }
   
-    // 🔁 Safer redirect
     if (url) {
       window.location.assign(url);
     }
   };
+  
   
   
   return (
