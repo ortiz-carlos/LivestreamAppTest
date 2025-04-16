@@ -432,4 +432,29 @@ footer {
   font-size: 14px;
   width: 100%;
 }
-  
+
+.nav-user-controls {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+.user-greeting {
+  margin-right: 15px;
+  font-weight: bold;
+}
+
+.logout-btn {
+  background-color: #860037;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+.logout-btn:hover {
+  background-color: #610028;
+}
