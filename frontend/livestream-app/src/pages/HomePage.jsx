@@ -12,22 +12,28 @@ const HomePage = () => {
     navigate('/login');
   };
 
+  const displayName =
+    user?.user_metadata?.name || user?.email?.split('@')[0] || 'User';
+
   return (
     <>
       <nav>
         <div className="logo">LiveStream</div>
+
         <ul>
           <li><Link to="/home">Home</Link></li>
           <li><Link to="/stream">Stream</Link></li>
           <li><Link to="/admin">Admin</Link></li>
-          {user && (
-            <li>
-              <button className="btn" onClick={handleLogout} style={{ marginLeft: '10px' }}>
-                Log Out
-              </button>
-            </li>
-          )}
         </ul>
+
+        {user && (
+          <div className="nav-user-controls">
+            <span className="user-greeting">Hi {displayName}!</span>
+            <button className="logout-btn" onClick={handleLogout}>
+              Log Out
+            </button>
+          </div>
+        )}
       </nav>
 
       <header className="hero">
