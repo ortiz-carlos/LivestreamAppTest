@@ -4,10 +4,11 @@ from fastapi.middleware.cors import CORSMiddleware
 from routers import broadcasts
 from ws.scoreboard import router as scoreboard_router
 from auth import router as auth_router
+from ws.chat import router as chat_router
 
 
 app = FastAPI()
-
+app.include_router(chat_router)
 app.include_router(scoreboard_router)
 app.include_router(auth_router)
 
