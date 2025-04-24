@@ -3,8 +3,9 @@ import axios from 'axios';
 import '../styles.css';
 import { getUTCPartsFromLocal, getLocalInputsFromUTC } from '../utils/time_utils';
 
-const API_BASE_URL = 'http://localhost:8000';
-const WS_BASE_URL = 'ws://localhost:8000';
+const API_BASE_URL = process.env.REACT_APP_API_URL;
+const WS_BASE_URL = process.env.REACT_APP_WS_URL;
+
 
 const AdminPage = () => {
   const [broadcasts, setBroadcasts] = useState([]);
