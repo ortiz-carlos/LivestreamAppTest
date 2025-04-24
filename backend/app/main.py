@@ -1,5 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from backend.app.routers import broadcasts
 from backend.app.ws.scoreboard import router as scoreboard_router
 from backend.app.ws.chat import router as chat_router
