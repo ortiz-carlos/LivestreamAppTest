@@ -1,9 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from routers import broadcasts
-from routers.auth import router as auth_router
-from ws.scoreboard import router as scoreboard_router
-from ws.chat import router as chat_router
+from backend.app.routers import broadcasts
+from backend.app.ws.scoreboard import router as scoreboard_router
+from backend.app.ws.chat import router as chat_router
+from backend.app.routers.auth import router as auth_router
+
 
 app = FastAPI()
 
