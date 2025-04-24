@@ -18,7 +18,7 @@ const HomePage = () => {
   return (
     <>
       <nav>
-        <div className="logo">LiveStream</div>
+        <div className="logo">StampedeStream</div>
 
         <ul>
           <li><Link to="/home">Home</Link></li>

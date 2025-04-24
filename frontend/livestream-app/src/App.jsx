@@ -5,14 +5,19 @@ import StreamPage from './pages/StreamPage';
 import AdminPage from './pages/AdminPage';
 import RegisterPage from './pages/RegisterPage';
 import LoginPage from './pages/LoginPage';
-import PrivateRoute from './components/PrivateRoute';
+import NotFoundPage from './pages/NotFoundPage';
 import { AuthContext } from './AuthContext';
 import OAuthCallback from './pages/OAuthCallback';
 
-const App = () => {
-  const { loading } = useContext(AuthContext);
+const ProtectedRoute = ({ children }) => {
+  const { user } = useContext(AuthContext);
+  return user ? children : <Navigate to="/login" />;
+};
 
-  if (loading) return <div>Loading...</div>;
+const App = () => {
+  const { loading, user } = useContext(AuthContext);
+
+  if (loading || user === undefined) return <div>Loading...</div>;
 
   return (
     <Router>
@@ -20,15 +25,16 @@ const App = () => {
         {/* Public routes */}
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
-
-        {/* Protected routes */}
-        <Route path="/home" element={<PrivateRoute><HomePage /></PrivateRoute>} />
-        <Route path="/stream" element={<PrivateRoute><StreamPage /></PrivateRoute>} />
-        <Route path="/admin" element={<PrivateRoute><AdminPage /></PrivateRoute>} />
         <Route path="/oauth/callback" element={<OAuthCallback />} />
 
+        {/* Protected routes */}
+        <Route path="/home" element={<ProtectedRoute><HomePage /></ProtectedRoute>} />
+        <Route path="/stream" element={<ProtectedRoute><StreamPage /></ProtectedRoute>} />
+        <Route path="/admin" element={<ProtectedRoute><AdminPage /></ProtectedRoute>} />
+
         {/* Redirect unknown paths */}
-        <Route path="*" element={<Navigate to="/login" />} />
+        <Route path="*" element={<NotFoundPage />} />
+
       </Routes>
     </Router>
   );

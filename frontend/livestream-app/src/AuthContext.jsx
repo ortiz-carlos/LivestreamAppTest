@@ -27,9 +27,9 @@ export const AuthProvider = ({ children }) => {
           localStorage.removeItem('token');
         }
       }
+      setLoading(false);
     };
     fetchJWTUser();
-    setLoading(false);
   }, [token]);
 
   useEffect(() => {
@@ -57,7 +57,6 @@ export const AuthProvider = ({ children }) => {
         }
       });
       
-  
       setLoading(false);
       return () => subscription.unsubscribe();
     };
