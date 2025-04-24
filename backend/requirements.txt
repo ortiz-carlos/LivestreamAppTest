@@ -8,3 +8,5 @@ google-auth-httplib2
 google-api-python-client
 websockets
 python-dotenv
+supabase
+python-jose

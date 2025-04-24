@@ -1,9 +1,11 @@
+### routers/broadcasts.py
+
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import PlainTextResponse
 from typing import List
 from datetime import datetime
 from models.broadcast_models import BroadcastRequest, BroadcastResponse
-from youtube_utils import (
+from services.youtube_utils import (
     schedule_broadcast,
     get_scheduled_broadcasts,
     update_broadcast as youtube_update_broadcast,

@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect } from 'react';
 import axios from 'axios';
 import { AuthContext } from '../AuthContext';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 
 const LoginPage = () => {
@@ -10,12 +10,17 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [err, setErr] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
+
+  console.log('LoginPage loaded, pathname:', location.pathname);
+  console.log('AuthContext:', { user, loading });
+
 
   useEffect(() => {
-    if (!loading && user) {
+    if (!loading && user && location.pathname === '/login') {
       navigate('/home');
     }
-  }, [user, loading, navigate]);
+  }, [user, loading, navigate, location.pathname]);
   
 
 
@@ -30,7 +35,6 @@ const LoginPage = () => {
       });
 
       login(token, me.data);
-      navigate('/home');
     } catch (error) {
       setErr('Invalid credentials');
     }
