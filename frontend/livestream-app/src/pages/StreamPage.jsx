@@ -40,8 +40,7 @@ const StreamPage = () => {
 
   // Scoreboard WebSocket
   useEffect(() => {
-    const scoreSocket = new WebSocket(`${WS_URL}/ws/score`);
-
+    const scoreSocket = new WebSocket(`${process.env.REACT_APP_WS_URL}/ws/score`);
     scoreSocket.onopen = () => setStatus('Connected to live scoreboard');
     scoreSocket.onerror = () => setStatus('WebSocket error');
     scoreSocket.onclose = () => setStatus('Disconnected');
