@@ -18,26 +18,30 @@ const StreamPage = () => {
   const [newMessage, setNewMessage] = useState('');
   const chatSocketRef = useRef(null);
 
-  // Load livestream URL
+  const API_URL = process.env.REACT_APP_BACKEND_URL;
+  const WS_URL = process.env.REACT_APP_WS_URL;
+
+  // Fetch livestream URL
   useEffect(() => {
-    fetch('http://localhost:8000/live_url')
+    fetch(`${API_URL}/live_url`)
       .then((res) => res.text())
       .then((text) => {
-        if (text.includes('youtube.com')) {
+        if (text.includes('youtube.com') || text.includes('embed')) {
           setUrl(text);
         } else {
-          setError(text);
+          setError('No livestream is currently available.');
         }
       })
       .catch((err) => {
         setError('Failed to load livestream.');
         console.error(err);
       });
-  }, []);
+  }, [API_URL]);
 
-  // Score WebSocket
+  // Scoreboard WebSocket
   useEffect(() => {
-    const scoreSocket = new WebSocket('ws://localhost:8000/ws/score');
+    const scoreSocket = new WebSocket(`${WS_URL}/ws/score`);
+
     scoreSocket.onopen = () => setStatus('Connected to live scoreboard');
     scoreSocket.onerror = () => setStatus('WebSocket error');
     scoreSocket.onclose = () => setStatus('Disconnected');
@@ -45,25 +49,38 @@ const StreamPage = () => {
       const data = JSON.parse(event.data);
       setScore(data);
     };
+
     return () => scoreSocket.close();
-  }, []);
+  }, [WS_URL]);
 
   // Chat WebSocket
   useEffect(() => {
-    chatSocketRef.current = new WebSocket('ws://localhost:8000/ws/chat');
-    chatSocketRef.current.onmessage = (event) => {
+    const socket = new WebSocket(`${WS_URL}/ws/chat`);
+    chatSocketRef.current = socket;
+
+    socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
       setChatMessages((prev) => [...prev, data]);
     };
-    return () => chatSocketRef.current.close();
-  }, []);
+
+    socket.onerror = (err) => {
+      console.error("Chat WebSocket error:", err);
+    };
+
+    return () => socket.close();
+  }, [WS_URL]);
 
   const handleSendMessage = (e) => {
     e.preventDefault();
+    if (chatSocketRef.current?.readyState !== WebSocket.OPEN) {
+      console.error('WebSocket not connected');
+      return;
+    }
+
     if (newMessage.trim() && user) {
       chatSocketRef.current.send(
         JSON.stringify({
-          username: user?.name || user?.email,
+          username: user?.name || user?.email || 'Anonymous',
           message: newMessage,
         })
       );
@@ -71,12 +88,9 @@ const StreamPage = () => {
     }
   };
 
-console.log("Current user:", user);
-
-
   return (
     <div className="stream-container">
-      {/* TV-style Score Bug */}
+      {/* Score Bug */}
       <div className="score-bug">
         <div className="team">
           <span className="team-name">{score.home_name}</span>
@@ -92,7 +106,7 @@ console.log("Current user:", user);
       <p>{status}</p>
 
       <div className="stream-chat-layout">
-        {/* Livestream iframe */}
+        {/* Stream Video */}
         <div className="stream-video">
           {url ? (
             <iframe
@@ -108,7 +122,7 @@ console.log("Current user:", user);
           )}
         </div>
 
-        {/* Live Chat */}
+        {/* Chat Box */}
         <div className="chat-box">
           <h3>Live Chat</h3>
           <div className="chat-messages">

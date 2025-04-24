@@ -1,8 +1,8 @@
 import React, { useState, useContext, useEffect } from 'react';
 import axios from 'axios';
-import { AuthContext } from './AuthContext';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { supabase } from './supabaseClient';
+import { AuthContext } from '../AuthContext';
+import { supabase } from '../supabaseClient';
 
 const baseUrl = process.env.REACT_APP_API_URL;
 

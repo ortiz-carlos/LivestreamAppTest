@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import axios from 'axios';
-import { AuthContext } from './AuthContext';
+import { AuthContext } from '../AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const baseUrl = process.env.REACT_APP_API_URL;
